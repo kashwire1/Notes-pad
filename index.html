@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lite Notepad - Greenland Community</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #4caf50;
+            color: white;
+            padding: 10px 20px;
+        }
+        header h1 {
+            margin: 0;
+            font-size: 20px;
+        }
+        #menu {
+            position: relative;
+            display: inline-block;
+        }
+        #menu-button {
+            background-color: #4caf50;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        #menu-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            min-width: 200px;
+            z-index: 1;
+        }
+        #menu-content a {
+            color: #333;
+            padding: 10px;
+            text-decoration: none;
+            display: block;
+        }
+        #menu-content a:hover {
+            background-color: #ddd;
+        }
+        #menu:hover #menu-content {
+            display: block;
+        }
+        #clock {
+            font-size: 18px;
+            margin: 20px;
+            text-align: center;
+        }
+        #calendar {
+            margin: 20px 0;
+            text-align: center;
+        }
+        #notepad-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: calc(100vh - 100px);
+        }
+        textarea {
+            width: 100%;
+            height: 100%;
+            font-size: 16px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+            background-color: #fff;
+            box-sizing: border-box;
+        }
+        .top-buttons {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: #4caf50;
+        }
+        .top-buttons button {
+            font-size: 16px;
+            padding: 10px 20px;
+            border: none;
+            background-color: #45a049;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .top-buttons button:hover {
+            background-color: #3e8e41;
+        }
+        footer {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #4caf50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Lite Notepad - Greenland Community</h1>
+        <div id="menu">
+            <button id="menu-button">MENU</button>
+            <div id="menu-content">
+                <a href="#clock">Digital 24-Hour Clock</a>
+                <a href="#calendar">Calendar</a>
+                <a href="#notepad">Voice-to-Text</a>
+                <a href="#" onclick="openGoogleTranslate()">Google Translate</a>
+            </div>
+        </div>
+    </header>
+
+    <div id="clock">00:00:00</div>
+
+    <div id="calendar"></div>
+
+    <div id="notepad-container">
+        <div class="top-buttons">
+            <button onclick="saveNote()">Save Note</button>
+            <button onclick="startVoiceToText()">Start Voice-to-Text</button>
+            <button onclick="stopVoiceToText()">Stop Voice-to-Text</button>
+        </div>
+        <textarea id="notepad" placeholder="Start typing your notes here..."></textarea>
+    </div>
+
+    <footer>
+        &copy; 2025 Greenland Community. Greenland Community is not liable for any data loss.
+    </footer>
+
+    <script>
+        // Digital 24-Hour Clock
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock').innerText = `Current Time: ${hours}:${minutes}:${seconds}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Calendar Display
+        function createCalendar() {
+            const now = new Date();
+            const options = { month: 'long', year: 'numeric', day: 'numeric', weekday: 'long' };
+            document.getElementById('calendar').innerHTML = `<h2>${now.toLocaleDateString(undefined, options)}</h2>`;
+        }
+        createCalendar();
+
+        // Voice-to-Text Functionality
+        let recognition;
+        function startVoiceToText() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert('Voice-to-text is not supported in your browser.');
+                return;
+            }
+            recognition = new webkitSpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            recognition.onresult = (event) => {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0].transcript)
+                    .join('');
+                document.getElementById('notepad').value = transcript;
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+            };
+
+            recognition.start();
+        }
+
+        function stopVoiceToText() {
+            if (recognition) {
+                recognition.stop();
+            }
+        }
+
+        // Save Note Functionality
+        function saveNote() {
+            const text = document.getElementById('notepad').value;
+            const wordCount = text.split(/\s+/).filter(word => word).length;
+
+            if (wordCount > 2000000) {
+                alert('Note exceeds the maximum word limit of 2 million words.');
+                return;
+            }
+
+            const blob = new Blob([text], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'note.txt';
+            link.click();
+        }
+
+        // Open Google Translate in a new window
+        function openGoogleTranslate() {
+            window.open('https://translate.google.com/', '_blank');
+        }
+    </script>
+</body>
+</html>
